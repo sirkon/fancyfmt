@@ -1,0 +1,43 @@
+package lalala
+
+/*
+blah-blah-blah package doc blah-blah-blah
+*/
+
+
+// lalalal
+import (
+// 3rd party
+"github.com/sirkon/message"
+)
+
+import (
+"fmt"
+)
+
+import (
+"./cmd/fancyfmt"
+"github.com/sirkon/fancyfmt"
+"io"
+)
+
+import (
+"C"
+)
+
+import (
+alias "encoding/json"
+)
+
+
+// dsfjkljsfdljfdslkfjsldkjksldf
+/* fsdjlfjsdlfjsdlfjsdlfkjdlkf
+fdskjfljsdlfk
+dsfhjklfjskl */
+
+// main blah-blah-blah
+func main() {
+//asdjdsfjlkdfjk
+ah := []int{1,2,
+3,4,5}
+}
