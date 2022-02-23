@@ -17,7 +17,7 @@ import (
 )
 
 // Format formats given AST tree
-func Format(fset *token.FileSet, file *ast.File, grouper ImportsGrouper) (io.Reader, error) {
+func Format(fset *token.FileSet, file *ast.File, content []byte, grouper ImportsGrouper) (io.Reader, error) {
 	// work with imports
 	imports := clearImports(fset, file)
 	_, dfile, err := addImports(fset, file, grouper, imports)
@@ -34,7 +34,14 @@ func Format(fset *token.FileSet, file *ast.File, grouper ImportsGrouper) (io.Rea
 		return nil, errors.Wrap(err, "format result")
 	}
 
-	return &buf, nil
+	// need to restore deleted type parameters
+	// TODO delete after dst will have type parameters support
+	final, err := restoreTypeParameters(fset, file, content, buf.Bytes())
+	if err != nil {
+		return nil, errors.Wrap(err, "restore deleted type parameters")
+	}
+
+	return bytes.NewReader(final), nil
 }
 
 type pkgPath = string

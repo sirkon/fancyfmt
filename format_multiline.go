@@ -16,6 +16,8 @@ const (
 func formatMultiline(file *dst.File) error {
 	dst.Inspect(file, func(node dst.Node) bool {
 		switch v := node.(type) {
+		case *dst.FuncType:
+			multilineFuncTypeParams(v)
 		case *dst.FuncDecl:
 			multilineFuncDeclParams(v)
 			multilineFuncDeclResults(v)
@@ -273,4 +275,21 @@ func multlineSelectorFunc(x *dst.CallExpr) bool {
 	}
 
 	return false
+}
+
+func multilineFuncTypeParams(v *dst.FuncType) {
+	var isMultiline bool
+	for _, p := range v.Params.List {
+		if p.Decs.Before == dst.NewLine || p.Decs.After == dst.NewLine {
+			isMultiline = true
+			break
+		}
+	}
+	if !isMultiline {
+		return
+	}
+	for _, p := range v.Params.List {
+		p.Decorations().Before = dst.NewLine
+		p.Decorations().After = dst.NewLine
+	}
 }

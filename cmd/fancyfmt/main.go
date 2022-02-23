@@ -86,13 +86,18 @@ func process(path string, recursive bool, write bool, grouper fancyfmt.ImportsGr
 	}
 
 	for _, path := range paths {
+		fileContent, err := os.ReadFile(path)
+		if err != nil {
+			return errors.Wrap(err, "read file content")
+		}
+
 		fset := token.NewFileSet()
-		file, err := parser.ParseFile(fset, path, nil, parser.AllErrors|parser.ParseComments)
+		file, err := parser.ParseFile(fset, path, fileContent, parser.AllErrors|parser.ParseComments)
 		if err != nil {
 			return errors.Wrap(err, "parse "+path)
 		}
 
-		res, err := fancyfmt.Format(fset, file, grouper)
+		res, err := fancyfmt.Format(fset, file, fileContent, grouper)
 		if err != nil {
 			return errors.Wrap(err, "format "+path)
 		}
