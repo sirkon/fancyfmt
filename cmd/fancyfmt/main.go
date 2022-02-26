@@ -22,7 +22,7 @@ func main() {
 		Recursive      bool   `short:"r" help:"Process directories recursively. This options requires -w|--write option to be enabled."`
 		CurrentProject string `short:"c" help:"Use this value as the current project path"`
 
-		Paths []string `arg:"" type:"path" help:"Paths to process. May be file or directory if recursive option is enabled"`
+		Paths []string `arg:"" type:"path" help:"Paths to process. May be file or directory if recursive option is enabled, use '-'' to format stdin input."`
 	}
 
 	ctx := kong.Parse(&cli)
@@ -44,7 +44,19 @@ func main() {
 			message.Fatal("get imports grouper")
 		}
 	}
+
+	for _, path := range cli.Paths {
+		if filepath.Base(path) == "-" && len(cli.Paths) != 1 {
+			message.Fatal("cannot combine stdin input with files or another stdin inputs")
+		}
+	}
 	for _, p := range cli.Paths {
+		if filepath.Base(p) == "-" {
+			if err := processStdin(); err != nil {
+				message.Fatal(err)
+			}
+			return
+		}
 		if err := process(p, cli.Recursive, cli.Write, importsGrouper); err != nil {
 			message.Fatal(errors.Wrap(err, "process "+p))
 		}
@@ -119,6 +131,37 @@ func process(path string, recursive bool, write bool, grouper fancyfmt.ImportsGr
 				return errors.Wrap(err, "copy to stdout")
 			}
 		}
+	}
+
+	return nil
+}
+
+func processStdin() error {
+	input, err := io.ReadAll(os.Stdin)
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "-", input, parser.AllErrors|parser.ParseComments)
+	if err != nil {
+		// do not annotate parsing error as it may have
+		// error position info at the start
+		message.Error("failed to parse stdin data")
+		return err
+	}
+
+	grouper, err := fancyfmt.DefaultImportsGrouper()
+	if err != nil {
+		return errors.Wrap(err, "setup imports grouper")
+	}
+	res, err := fancyfmt.Format(fset, file, input, grouper)
+	if err != nil {
+		// same here, do not annotate formatting error
+		message.Error("failed to format stdin data")
+		return err
+	}
+
+	_, err = io.Copy(os.Stdout, res)
+	if err != nil {
+		return errors.Wrap(err, "write formatted source code into the stdout")
 	}
 
 	return nil
