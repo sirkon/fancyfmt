@@ -3,6 +3,7 @@ package fancyfmt
 import (
 	"bytes"
 	"go/ast"
+	"go/format"
 	"go/parser"
 	"go/printer"
 	"go/token"
@@ -10,8 +11,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/dave/dst"
-	"github.com/dave/dst/decorator"
+	"github.com/sirkon/dst"
+	"github.com/sirkon/dst/decorator"
 	"github.com/sirkon/errors"
 	"golang.org/x/tools/go/ast/astutil"
 )
@@ -127,7 +128,11 @@ type imp struct {
 
 // addImports adds imports removed just before and setups proper line distancing within import statments. Returns dst
 // file as all further work needed it
-func addImports(fset *token.FileSet, file *ast.File, grouper ImportsGrouper, imports map[pkgPath]pkgAlias) (*token.FileSet, *dst.File, error) {
+func addImports(fset *token.FileSet, file *ast.File, grouper ImportsGrouper, imports map[pkgPath]pkgAlias) (
+	*token.FileSet,
+	*dst.File,
+	error,
+) {
 	// group imports
 	groups := map[int][]imp{}
 	for path, alias := range imports {
@@ -202,6 +207,18 @@ loop:
 		return nil, nil, errors.Wrap(err, "parse intermediate state")
 	}
 
+	removeTypeParams(file)
+	var noTypeParams bytes.Buffer
+	if err := format.Node(&noTypeParams, fset, file); err != nil {
+		return nil, nil, errors.Wrap(err, "format source with type params removed")
+	}
+
+	fset = token.NewFileSet()
+	file, err = parser.ParseFile(fset, "", noTypeParams.Bytes(), parser.AllErrors|parser.ParseComments)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "parse back source with type params removed")
+	}
+
 	dfile, err := decorator.DecorateFile(fset, file)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "convert to dst")
@@ -242,6 +259,25 @@ dloop:
 	}
 
 	return fset, dfile, nil
+}
+
+// removeTypeParams remove type parameters for the github.com/dave/dst
+// TODO remove after dst update
+func removeTypeParams(file *ast.File) {
+	ast.Inspect(file, func(node ast.Node) bool {
+		switch v := node.(type) {
+		case *ast.FuncDecl:
+			v.Type.TypeParams = nil
+			if v.Recv == nil || len(v.Recv.List) == 0 {
+				break
+			}
+
+		case *ast.TypeSpec:
+			v.TypeParams = nil
+		}
+
+		return true
+	})
 }
 
 func reorderImports(weights []int, groups map[int][]imp, decl *ast.GenDecl) {

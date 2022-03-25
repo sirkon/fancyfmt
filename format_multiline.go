@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dave/dst"
+	"github.com/sirkon/dst"
 )
 
 const (

@@ -52,3 +52,8 @@ faster.
 * fancyfmt mutates `[]byte{…}` literals if they only have numbers replacing them with hex numbers.
 * You may fix composite literals formatting (except the new line before the first item and after the last one) by
 adding a comment after an element. 
+
+
+### PS
+
+This is a temporary fork of github.com/dave/dst until 
