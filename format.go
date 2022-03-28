@@ -2,19 +2,19 @@ package fancyfmt
 
 import (
 	"bytes"
+	"github.com/sirkon/dst"
+	"github.com/sirkon/dst/decorator"
+	"github.com/sirkon/errors"
 	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/printer"
 	"go/token"
+
+	"golang.org/x/tools/go/ast/astutil"
 	"io"
 	"sort"
 	"strconv"
-
-	"github.com/sirkon/dst"
-	"github.com/sirkon/dst/decorator"
-	"github.com/sirkon/errors"
-	"golang.org/x/tools/go/ast/astutil"
 )
 
 // Format formats given AST tree
@@ -35,14 +35,7 @@ func Format(fset *token.FileSet, file *ast.File, content []byte, grouper Imports
 		return nil, errors.Wrap(err, "format result")
 	}
 
-	// need to restore deleted type parameters
-	// TODO delete after dst will have type parameters support
-	final, err := restoreTypeParameters(fset, file, content, buf.Bytes())
-	if err != nil {
-		return nil, errors.Wrap(err, "restore deleted type parameters")
-	}
-
-	return bytes.NewReader(final), nil
+	return &buf, nil
 }
 
 type pkgPath = string
@@ -207,7 +200,6 @@ loop:
 		return nil, nil, errors.Wrap(err, "parse intermediate state")
 	}
 
-	removeTypeParams(file)
 	var noTypeParams bytes.Buffer
 	if err := format.Node(&noTypeParams, fset, file); err != nil {
 		return nil, nil, errors.Wrap(err, "format source with type params removed")
@@ -259,25 +251,6 @@ dloop:
 	}
 
 	return fset, dfile, nil
-}
-
-// removeTypeParams remove type parameters for the github.com/dave/dst
-// TODO remove after dst update
-func removeTypeParams(file *ast.File) {
-	ast.Inspect(file, func(node ast.Node) bool {
-		switch v := node.(type) {
-		case *ast.FuncDecl:
-			v.Type.TypeParams = nil
-			if v.Recv == nil || len(v.Recv.List) == 0 {
-				break
-			}
-
-		case *ast.TypeSpec:
-			v.TypeParams = nil
-		}
-
-		return true
-	})
 }
 
 func reorderImports(weights []int, groups map[int][]imp, decl *ast.GenDecl) {
