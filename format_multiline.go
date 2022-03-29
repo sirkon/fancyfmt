@@ -1,12 +1,12 @@
 package fancyfmt
 
 import (
-	"github.com/sirkon/dst"
 	"go/token"
 	"math"
 	"strconv"
-
 	"strings"
+
+	"github.com/sirkon/dst"
 )
 
 const (
@@ -16,8 +16,16 @@ const (
 func formatMultiline(file *dst.File) error {
 	dst.Inspect(file, func(node dst.Node) bool {
 		switch v := node.(type) {
+		case *dst.TypeSpec:
+			multilineTypeParams(v.TypeParams)
 		case *dst.FuncType:
 			multilineFuncTypeParams(v)
+
+			if v.TypeParams == nil || len(v.TypeParams.List) == 0 {
+				return true
+			}
+
+			multilineTypeParams(v.TypeParams)
 		case *dst.FuncDecl:
 			multilineFuncDeclParams(v)
 			multilineFuncDeclResults(v)
@@ -289,6 +297,34 @@ func multilineFuncTypeParams(v *dst.FuncType) {
 		return
 	}
 	for _, p := range v.Params.List {
+		p.Decorations().Before = dst.NewLine
+		p.Decorations().After = dst.NewLine
+	}
+}
+
+func multilineTypeParams(v *dst.FieldList) {
+	if v == nil || len(v.List) == 0 {
+		return
+	}
+
+	var isMultiline bool
+	for _, p := range v.List {
+		if p.Decorations().Start != nil || p.Decorations().End != nil {
+			// exit if there's a comment
+			return
+		}
+
+		if p.Decorations().Before == dst.NewLine {
+			isMultiline = true
+			break
+		}
+	}
+
+	if !isMultiline {
+		return
+	}
+
+	for _, p := range v.List {
 		p.Decorations().Before = dst.NewLine
 		p.Decorations().After = dst.NewLine
 	}
