@@ -13,6 +13,7 @@ require (
 
 require (
 	github.com/pkg/errors v0.8.1 // indirect
+	github.com/sirkon/jsonexec v0.0.1 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )

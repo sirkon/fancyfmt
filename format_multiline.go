@@ -1,12 +1,12 @@
 package fancyfmt
 
 import (
+	"github.com/sirkon/dst"
 	"go/token"
 	"math"
 	"strconv"
-	"strings"
 
-	"github.com/sirkon/dst"
+	"strings"
 )
 
 const (

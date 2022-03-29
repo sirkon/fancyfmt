@@ -1,16 +1,16 @@
 package fancyfmt
 
 import (
+	"github.com/sirkon/errors"
+	"github.com/sirkon/jsonexec"
+	"golang.org/x/tools/go/packages"
 	"io/ioutil"
 	"os"
 	"path"
+
 	"path/filepath"
 	"strings"
 	"sync"
-
-	"github.com/sirkon/errors"
-	"golang.org/x/mod/modfile"
-	"golang.org/x/tools/go/packages"
 )
 
 const (
@@ -70,12 +70,8 @@ func DefaultImportsGrouper() (ImportsGrouper, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "look for go.mod file in "+curproject)
 	}
-
 	if curproject == "" {
-		curproject, err = deriveProjectPathFromGoPath()
-		if err != nil {
-			return nil, errors.Wrap(err, "derive package path as it would be a $GOPATH/src subdir")
-		}
+		return nil, errors.New("empty module path")
 	}
 
 	oncer.Do(initStdlibPackages)
@@ -89,72 +85,16 @@ func DefaultImportGroupsWithCurrent(current string) ImportsGrouper {
 }
 
 func findCurrentProjectInGoMod(curdir string) (string, error) {
-	for {
-		gomodName := filepath.Join(curdir, "go.mod")
-		gomodData, err := ioutil.ReadFile(gomodName)
-		if err == nil {
-			gomod, err := modfile.Parse(gomodName, gomodData, nil)
-			if err != nil {
-				return "", errors.Wrap(err, "parse "+gomodName)
-			}
-
-			return gomod.Module.Mod.Path, nil
-
-		} else if !os.IsNotExist(err) {
-			return "", errors.Wrap(err, "open go.mod in "+curdir)
+	var data struct {
+		Module struct {
+			Path string
 		}
-
-		if curdir == "" || curdir == string(os.PathSeparator) {
-			break
-		}
-		curdir, _ = filepath.Split(curdir)
+	}
+	if err := jsonexec.Run(&data, "go", "mod", "edit", "--json"); err != nil {
+		return "", errors.Wrap(err, "get module info")
 	}
 
-	return "", nil
-}
-
-func deriveProjectPathFromGoPath() (string, error) {
-	gopath := os.Getenv("GOPATH")
-	if gopath == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", errors.Wrap(err, "find current user home dir to use $HOME/go as $GOPATH")
-		}
-
-		gopath = filepath.Join(home, "go")
-	}
-
-	gosrc := filepath.Join(gopath, "src")
-	curdir, err := os.UserHomeDir()
-	if err != nil {
-		return "", errors.Wrap(err, "get user home dir")
-	}
-	rel, err := filepath.Rel(gosrc, curdir)
-	if err != nil {
-		return "", errors.Wrap(err, "compute relative path of current dir against $GOPATH/src")
-	}
-
-	if strings.HasPrefix(rel, "..") {
-		return "", errors.Newf("current path %s is out of the GOPATH/src", curdir)
-	}
-
-	parts := strings.Split(rel, string(os.PathSeparator))
-	switch len(parts) {
-	case 1, 2:
-		if parts[0] == "" {
-			return "", errors.New("you are right in the $GOPATH/src, no package here is allowed")
-		}
-
-		return parts[0], nil
-	default:
-		// take first three components as a package path in case if it is valid package domain name, otherwise take
-		// the first component
-		if checkPackageNameDomain(parts[0]) != nil {
-			return parts[0], nil
-		}
-
-		return path.Join(parts[:3]...), nil
-	}
+	return curdir, nil
 }
 
 var oncer sync.Once

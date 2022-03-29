@@ -2,19 +2,18 @@ package fancyfmt
 
 import (
 	"bytes"
-	"github.com/sirkon/dst"
-	"github.com/sirkon/dst/decorator"
-	"github.com/sirkon/errors"
 	"go/ast"
-	"go/format"
 	"go/parser"
 	"go/printer"
 	"go/token"
-
-	"golang.org/x/tools/go/ast/astutil"
 	"io"
 	"sort"
 	"strconv"
+
+	"github.com/sirkon/dst"
+	"github.com/sirkon/dst/decorator"
+	"github.com/sirkon/errors"
+	"golang.org/x/tools/go/ast/astutil"
 )
 
 // Format formats given AST tree
@@ -161,7 +160,7 @@ func addImports(fset *token.FileSet, file *ast.File, grouper ImportsGrouper, imp
 		}
 	}
 
-	// need to reorder imports as astutil setups is own order which may be not what is needed for us
+	// need to reorder imports as astutil setups its own order which may be not what is needed for us
 
 	// look for import which is not C
 	var decl *ast.GenDecl
@@ -198,17 +197,6 @@ loop:
 	file, err := parser.ParseFile(fset, "", buf.Bytes(), parser.AllErrors|parser.ParseComments)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "parse intermediate state")
-	}
-
-	var noTypeParams bytes.Buffer
-	if err := format.Node(&noTypeParams, fset, file); err != nil {
-		return nil, nil, errors.Wrap(err, "format source with type params removed")
-	}
-
-	fset = token.NewFileSet()
-	file, err = parser.ParseFile(fset, "", noTypeParams.Bytes(), parser.AllErrors|parser.ParseComments)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "parse back source with type params removed")
 	}
 
 	dfile, err := decorator.DecorateFile(fset, file)

@@ -11,6 +11,8 @@ github.com/sirkon/dst v0.0.0-20220325074450-e627867a8ae4 h1:WvVP0AZqI4+PB9LBkQYj
 github.com/sirkon/dst v0.0.0-20220325074450-e627867a8ae4/go.mod h1:e6HRc56jU5F2XT6GB8Cyci1Jb5cjX6gLqrm5+T/P7Zo=
 github.com/sirkon/errors v0.2.0 h1:f5Al4Ym4vrYU3lcJ56LE0vJalGgY4gp9llV46EOB/uQ=
 github.com/sirkon/errors v0.2.0/go.mod h1:QHzAIbAhNXYSz3uK9tvp99vPxroQWjNz4PbRg8Ef3Wc=
+github.com/sirkon/jsonexec v0.0.1 h1:ug1Cz1/GuuUrsr6LYN1ljIUUDqRiO0Gv2yRUo6jao8w=
+github.com/sirkon/jsonexec v0.0.1/go.mod h1:YO5hFk8oewQX9VpGPKdObnhAA7tjHGt8vUGoaiEa1G8=
 github.com/sirkon/message v1.5.1 h1:WkWYJGan4rkpAkZmHC0+Sy2da4orydz1lM6zL+CXAVQ=
 github.com/sirkon/message v1.5.1/go.mod h1:66L/RZsLkQeAw8iJjJAhHg/Wr7g2I6Ewlp3laCsb0RA=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
