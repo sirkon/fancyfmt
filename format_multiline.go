@@ -20,11 +20,6 @@ func formatMultiline(file *dst.File) error {
 			multilineTypeParams(v.TypeParams)
 		case *dst.FuncType:
 			multilineFuncTypeParams(v)
-
-			if v.TypeParams == nil || len(v.TypeParams.List) == 0 {
-				return true
-			}
-
 			multilineTypeParams(v.TypeParams)
 		case *dst.FuncDecl:
 			multilineFuncDeclParams(v)
