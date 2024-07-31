@@ -19,8 +19,8 @@ import (
 // Format formats given AST tree
 func Format(fset *token.FileSet, file *ast.File, content []byte, grouper ImportsGrouper) (io.Reader, error) {
 	// work with imports
-	imports := clearImports(fset, file)
-	_, dfile, err := addImports(fset, file, grouper, imports)
+	imports, cComment := clearImports(fset, file)
+	_, dfile, err := addImports(fset, file, grouper, imports, cComment)
 	if err != nil {
 		return nil, errors.Wrap(err, "rebuild import statements")
 	}
@@ -41,10 +41,11 @@ type pkgPath = string
 type pkgAlias = string
 
 // clearImports stores all imports into returning map and remove them from the file
-func clearImports(fset *token.FileSet, file *ast.File) map[pkgPath]pkgAlias {
+func clearImports(fset *token.FileSet, file *ast.File) (_ map[pkgPath]pkgAlias, cComments *ast.CommentGroup) {
 	imports := map[pkgPath]pkgAlias{}
 	var importStart *token.Pos
 	var importEnd *token.Pos
+	var importCPos *token.Pos
 	ast.Inspect(file, func(node ast.Node) bool {
 		switch v := node.(type) {
 		case *ast.GenDecl:
@@ -64,6 +65,10 @@ func clearImports(fset *token.FileSet, file *ast.File) map[pkgPath]pkgAlias {
 				imports[unqoute(v.Path.Value)] = v.Name.Name
 			} else {
 				imports[unqoute(v.Path.Value)] = ""
+			}
+			if v.Path.Value == `"C"` {
+				tmp := v.Pos()
+				importCPos = &tmp
 			}
 			if v.Doc != nil && len(v.Doc.List) > 0 {
 			comment:
@@ -96,6 +101,20 @@ func clearImports(fset *token.FileSet, file *ast.File) map[pkgPath]pkgAlias {
 	// remove comments within imports
 	if importStart != nil {
 		var cmts []*ast.CommentGroup
+		if importCPos != nil {
+			cLexicPos := fset.Position(*importCPos)
+		cImportsCommentsLoop:
+			for _, cmt := range file.Comments {
+				commentEndLexicPos := fset.Position(cmt.End()).Line
+				switch {
+				case commentEndLexicPos+1 == cLexicPos.Line:
+					cComments = cmt
+					break cImportsCommentsLoop
+				case commentEndLexicPos > cLexicPos.Line:
+					break cImportsCommentsLoop
+				}
+			}
+		}
 		for _, cmt := range file.Comments {
 			if *importStart <= cmt.Pos() && cmt.End() <= *importEnd || fset.Position(cmt.End()).Line+1 == fset.Position(*importStart).Line {
 				continue
@@ -105,7 +124,7 @@ func clearImports(fset *token.FileSet, file *ast.File) map[pkgPath]pkgAlias {
 		file.Comments = cmts
 	}
 
-	return imports
+	return imports, cComments
 }
 
 func unqoute(v string) string {
@@ -120,11 +139,13 @@ type imp struct {
 
 // addImports adds imports removed just before and setups proper line distancing within import statments. Returns dst
 // file as all further work needed it
-func addImports(fset *token.FileSet, file *ast.File, grouper ImportsGrouper, imports map[pkgPath]pkgAlias) (
-	*token.FileSet,
-	*dst.File,
-	error,
-) {
+func addImports(
+	fset *token.FileSet,
+	file *ast.File,
+	grouper ImportsGrouper,
+	imports map[pkgPath]pkgAlias,
+	cComment *ast.CommentGroup,
+) (*token.FileSet, *dst.File, error) {
 	// group imports
 	groups := map[int][]imp{}
 	for path, alias := range imports {
@@ -212,6 +233,13 @@ dloop:
 		case *dst.GenDecl:
 			if v.Tok != token.IMPORT {
 				continue
+			}
+			if cComment != nil {
+				var lines []string
+				for _, cmt := range cComment.List {
+					lines = append(lines, cmt.Text)
+				}
+				dec.Decorations().Start.Prepend(lines...)
 			}
 			dec.Decorations().End.Append("\n\n\n")
 			if cImportNotPassed {

@@ -1,5 +1,9 @@
 package testdata
 
+// CFLAGS: -O2 -g
+// #include "stdio"
+import "C"
+
 type Pair[K, V any, C any] struct {
 	k K
 	v V
