@@ -1,7 +1,7 @@
 # fancyfmt
 A formatter for Go code with bells and whistles
 
-## Installation
+## Installation.
 
 * Use 
 
@@ -19,14 +19,14 @@ A formatter for Go code with bells and whistles
   
     to install a ready to use formatter
 
-## Description
+## Description.
 
 [fancyfmt](https://github.com/sirkon/fancyfmt) is a
 
 * library to make gofmt compliant formatters
 * a ready to use formatter
 
-### Brief functionality
+### Brief functionality.
  
 
 * Imports grouping and sorting. Import paths are:
@@ -39,11 +39,7 @@ A formatter for Go code with bells and whistles
     * Multiline composite literals, slices and arrays get a special care at that
     * Multiline chaining
     
-### Screencast
-
-[![usage screencast](https://i9.ytimg.com/vi/WmqG-OTyF6g/mq2.jpg?sqp=CODsvvkF&rs=AOn4CLBgkcpGPMAak_SacamvPV9uXDA-eA)](https://youtu.be/WmqG-OTyF6g)
-
-## Remarks
+## Under the hood.
 
 * fancyfmt stores a cache of packages from standard library in a `os.TempDir()` directory. This was done to speedup 
 things as `package.Load(cfg, "std")` is slow, about 0.2s on my machine, cached access is about ten times faster. You

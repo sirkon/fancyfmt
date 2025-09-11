@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go/format"
 	"go/parser"
 	"go/token"
 	"io"
@@ -103,6 +104,11 @@ func process(path string, recursive bool, write bool, grouper fancyfmt.ImportsGr
 			return errors.Wrap(err, "read file content")
 		}
 
+		fileContent, err = format.Source(fileContent)
+		if err != nil {
+			return errors.Wrap(err, "apply standard formatting before the further processing")
+		}
+
 		fset := token.NewFileSet()
 		file, err := parser.ParseFile(fset, path, fileContent, parser.AllErrors|parser.ParseComments)
 		if err != nil {
@@ -138,13 +144,21 @@ func process(path string, recursive bool, write bool, grouper fancyfmt.ImportsGr
 
 func processStdin() error {
 	input, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		return errors.Wrap(err, "read stdin")
+	}
+
+	input, err = format.Source(input)
+	if err != nil {
+		return errors.Wrap(err, "apply standard formatting on stdin before the further processing")
+	}
 
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "-", input, parser.AllErrors|parser.ParseComments)
 	if err != nil {
 		// do not annotate parsing error as it may have
 		// error position info at the start
-		message.Error("failed to parse stdin data")
+		message.Error(errors.Wrap(err, "parse stdin"))
 		return err
 	}
 
@@ -154,8 +168,7 @@ func processStdin() error {
 	}
 	res, err := fancyfmt.Format(fset, file, input, grouper)
 	if err != nil {
-		// same here, do not annotate formatting error
-		message.Error("failed to format stdin data")
+		message.Error(errors.Wrap(err, "apply formatting"))
 		return err
 	}
 

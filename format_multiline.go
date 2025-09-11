@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sirkon/dst"
+	"github.com/dave/dst"
 )
 
 const (
@@ -27,9 +27,12 @@ func formatMultiline(file *dst.File) error {
 		case *dst.CallExpr:
 			var isMultiline bool
 			for _, p := range v.Args {
+				if p.Decorations().End != nil {
+					isMultiline = false
+					break
+				}
 				if p.Decorations().Before == dst.NewLine {
 					isMultiline = true
-					break
 				}
 			}
 			if !isMultiline {
@@ -42,9 +45,13 @@ func formatMultiline(file *dst.File) error {
 		case *dst.CompositeLit:
 			var isMultiline bool
 			for _, v := range v.Elts {
+				if v.Decorations().End != nil {
+					isMultiline = false
+					break
+				}
+
 				if v.Decorations().Before == dst.NewLine {
 					isMultiline = true
-					break
 				}
 			}
 			if !isMultiline {

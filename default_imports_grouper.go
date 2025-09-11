@@ -1,16 +1,16 @@
 package fancyfmt
 
 import (
-	"github.com/sirkon/errors"
-	"github.com/sirkon/jsonexec"
-	"golang.org/x/tools/go/packages"
 	"io/ioutil"
 	"os"
 	"path"
-
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/sirkon/errors"
+	"github.com/sirkon/jsonexec"
+	"golang.org/x/tools/go/packages"
 )
 
 const (
@@ -52,11 +52,13 @@ func (g defaultImportGrouper) isSubPkg(pkg string) bool {
 }
 
 // DefaultImportsGrouper provides an import grouper with a policy that is supposed to be the default:
-//   "C" - 0
-//   Standard library - 1
-//   3rd party - 2
-//   Current project - 3
-//   Relative imports - 4
+//
+//	"C" - 0
+//	Standard library - 1
+//	3rd party - 2
+//	Current project - 3
+//	Relative imports - 4
+//
 // It tried to determine a current project once called and may return an error if it failed to detect it. Use
 // DefaultImportGroupsWithCurrent if you don't need it or need to set up your own
 func DefaultImportsGrouper() (ImportsGrouper, error) {
@@ -94,7 +96,7 @@ func findCurrentProjectInGoMod(curdir string) (string, error) {
 		return "", errors.Wrap(err, "get module info")
 	}
 
-	return curdir, nil
+	return data.Module.Path, nil
 }
 
 var oncer sync.Once
