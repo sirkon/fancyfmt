@@ -14,7 +14,7 @@ A formatter for Go code with bells and whistles
 * Type
 
     ```shell script
-    go install github.com/sirkon/cmd/fancyfmt@latest
+    go install github.com/sirkon/fancyfmt/cmd/fancyfmt@latest
     ```
   
     to install a ready to use formatter
