@@ -3,7 +3,6 @@ package fancyfmt
 import (
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -43,8 +42,8 @@ func (g defaultImportGrouper) isSubPkg(pkg string) bool {
 	if pkg == string(g) {
 		return true
 	}
-	ok, err := path.Match(path.Join(string(g), "*"), pkg)
-	if err == nil && ok {
+
+	if strings.HasPrefix(pkg, string(g)+"/") {
 		return true
 	}
 
