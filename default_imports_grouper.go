@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	importGroupC = iota
-	importGroupStd
-	importGroup3rdParty
-	importGroupCurrent
-	importGroupRelative
+	ImportGroupC = iota
+	ImportGroupStd
+	ImportGroup3rdParty
+	ImportGroupCurrent
+	ImportGroupRelative
 )
 
 type defaultImportGrouper string
@@ -27,15 +27,15 @@ type defaultImportGrouper string
 func (g defaultImportGrouper) Weight(path string) int {
 	switch {
 	case path == "C":
-		return importGroupC
+		return ImportGroupC
 	case isStdlibPackage(path):
-		return importGroupStd
+		return ImportGroupStd
 	case g != "" && g.isSubPkg(path):
-		return importGroupCurrent
+		return ImportGroupCurrent
 	case strings.HasPrefix(path, "."):
-		return importGroupRelative
+		return ImportGroupRelative
 	default:
-		return importGroup3rdParty
+		return ImportGroup3rdParty
 	}
 }
 

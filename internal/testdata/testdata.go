@@ -3,11 +3,12 @@ package testdata
 // CFLAGS: -O2 -g
 // #include "stdio"
 import "C"
+
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
-	// Test comment
 	"github.com/sirkon/errors"
 )
 
@@ -46,3 +47,25 @@ func playground(a int, b string, c any) error {
 
 	return nil
 }
+
+func init() {
+	someFunc(
+		context.Background(),
+		map[string]int{
+			"a": 1,
+			"b": 2,
+			"c": 3,
+		},
+		"stringstringstringstring!",
+		nil,
+	)
+
+	var _ = []byte{
+		0x01, 0x02, 0x03, 0x04, 0x05,
+		0x06, 0x07, 0x08, 0x09, 0x0a,
+		0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+	}
+
+}
+
+func someFunc(a ...any) {}
